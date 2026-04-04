@@ -1,0 +1,195 @@
+# Programming Languages MIME Extensions
+
+# C / C++
+text/x-c c h
+text/x-c++ cpp cxx cc hpp hxx hh
+
+# Java
+text/x-java java
+
+# Python
+text/x-python py pyw
+
+# JavaScript / TypeScript
+application/javascript js mjs
+application/x-typescript ts tsx
+
+# C#
+text/x-csharp cs
+
+# Go
+text/x-go go
+
+# Rust
+text/x-rust rs
+
+# Kotlin
+text/x-kotlin kt kts
+
+# Swift
+text/x-swift swift
+
+# PHP
+application/x-httpd-php php php3 php4 php5 phtml
+
+# Ruby
+text/x-ruby rb
+
+# Perl
+text/x-perl pl pm
+
+# Shell scripting
+application/x-sh sh bash zsh
+application/x-csh csh tcsh
+application/x-fish fish
+
+# PowerShell
+application/x-powershell ps1 psd1 psm1
+
+# Dart
+text/x-dart dart
+
+# Scala
+text/x-scala scala sc
+
+# Haskell
+text/x-haskell hs lhs
+
+# Lua
+text/x-lua lua
+
+# Elixir
+text/x-elixir ex exs
+
+# Erlang
+text/x-erlang erl hrl
+
+# OCaml
+text/x-ocaml ml mli
+
+# F#
+text/x-fsharp fs fsx fsi
+
+# Nim
+text/x-nim nim
+
+# Zig
+text/x-zig zig
+
+# Crystal
+text/x-crystal cr
+
+# V
+text/x-v v
+
+# Julia
+text/x-julia jl
+
+# R
+text/x-r r
+
+# MATLAB / Octave
+text/x-matlab m
+text/x-octave octave
+
+# SQL
+application/sql sql
+
+# GraphQL
+application/graphql graphql gql
+
+# Assembly
+text/x-asm asm s
+
+# Web languages
+text/html html htm
+text/css css
+application/xml xml xsl xsd
+
+# JSON / YAML / TOML
+application/json json
+text/yaml yaml yml
+application/toml toml
+
+# Markdown
+text/markdown md markdown
+
+# Config / misc dev formats
+text/plain ini cfg conf
+application/x-env env
+
+# Docker
+text/x-dockerfile dockerfile
+
+# Makefiles
+text/x-makefile makefile mk
+
+# Gradle
+text/x-gradle gradle
+
+# Bazel
+text/x-bazel bzl
+
+# Protocol Buffers
+application/x-protobuf proto
+
+# Thrift
+application/x-thrift thrift
+
+# WebAssembly
+application/wasm wasm
+
+# Solidity (Ethereum)
+text/x-solidity sol
+
+# VHDL / Verilog
+text/x-vhdl vhdl vhd
+text/x-verilog v
+
+# Ada
+text/x-ada adb ads
+
+# COBOL
+text/x-cobol cob cbl
+
+# Fortran
+text/x-fortran f f90 f95
+
+# Pascal
+text/x-pascal pas
+
+# Smalltalk
+text/x-smalltalk st
+
+# Tcl
+text/x-tcl tcl
+
+# Hack (Meta)
+text/x-hack hack
+
+# Apex (Salesforce)
+text/x-apex cls
+
+# ABAP
+text/x-abap abap
+
+# GDScript (Godot)
+text/x-gdscript gd
+
+# HCL (Terraform)
+text/x-hcl hcl tf
+
+# Svelte
+text/x-svelte svelte
+
+# Vue
+text/x-vue vue
+
+# Angular templates
+text/x-angular html
+
+# JSX
+text/jsx jsx
+
+# TSX
+text/tsx tsx
