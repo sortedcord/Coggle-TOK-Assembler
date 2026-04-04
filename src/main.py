@@ -1,6 +1,6 @@
 from enum import Enum
 
-from mime_processor import fuzzy_match_mimetype_category
+from taggers.mime_tagger import fuzzy_match_mimetype_category
 from taggers.time_tagger import tag_time_tokens
 
 

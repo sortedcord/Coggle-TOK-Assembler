@@ -5,8 +5,6 @@ from dataclasses import dataclass
 from pathlib import Path
 import re
 
-from rapidfuzz import fuzz, process
-
 
 @dataclass(frozen=True)
 class MimeTypeStore:
@@ -17,12 +15,12 @@ class MimeTypeStore:
     search_term_to_result: dict[str, str]
 
 
-_MIME_TYPES_DIR = Path(__file__).parent
+_MIME_TYPES_DIR = Path(__file__).resolve().parents[1]
 _MIME_TYPES_GLOB = "*.types"
 _MIME_TYPE_STORE: MimeTypeStore | None = None
 
 
-def _normalize_token(token: str) -> str:
+def normalize_mime_token(token: str) -> str:
     return re.sub(r"[^a-z0-9]+", "", token.lower())
 
 
@@ -101,7 +99,7 @@ def build_mime_type_store(
     search_term_to_result: dict[str, str] = {}
 
     def add_search_term(term: str, result: str) -> None:
-        normalized = _normalize_token(term)
+        normalized = normalize_mime_token(term)
         if not normalized:
             return
         search_term_to_result.setdefault(normalized, result)
@@ -135,55 +133,31 @@ def get_mime_type_store() -> MimeTypeStore:
     return _MIME_TYPE_STORE
 
 
-def fuzzy_match_mimetype_category(
-    token: str,
+def _extensions_for_category(category: str, store: MimeTypeStore) -> tuple[str, ...]:
+    extensions: set[str] = set()
+    for mimetype, mimetype_extensions in store.mimetype_to_extensions.items():
+        if mimetype.startswith(f"{category}/"):
+            extensions.update(mimetype_extensions)
+    return tuple(sorted(extensions))
+
+
+def resolve_mime_extensions(
+    mimetype: str,
     store: MimeTypeStore | None = None,
-    *,
-    cutoff: float = 90.0,
-) -> str | None:
-    if not token or not token.strip():
+) -> tuple[str, ...] | None:
+    if not mimetype or not mimetype.strip():
         return None
 
     store = store or get_mime_type_store()
-    token = token.strip().lower()
-
-    if token in store.categories:
-        return token
-
-    fallback_category = None
-    if "/" in token:
-        category = token.split("/", 1)[0]
-        if category in store.categories:
-            fallback_category = category
+    token = mimetype.strip().lower()
 
     if token in store.mimetype_to_extensions:
-        return token
+        return store.mimetype_to_extensions[token]
 
-    extension = token.lstrip(".")
-    if extension in store.extension_to_mimetypes:
-        return store.extension_to_mimetypes[extension][0]
+    if token in store.categories:
+        return _extensions_for_category(token, store)
 
-    normalized = _normalize_token(token)
-    if not normalized:
-        return None
-
-    if normalized in store.search_term_to_result:
-        return store.search_term_to_result[normalized]
-
-    if len(normalized) < 4:
-        return fallback_category
-
-    score_cutoff = cutoff * 100 if cutoff <= 1.0 else cutoff
-    match = process.extractOne(
-        normalized,
-        store.search_terms,
-        scorer=fuzz.QRatio,
-        score_cutoff=score_cutoff,
-        processor=None,
-    )
-    if match:
-        return store.search_term_to_result[match[0]]
-    return fallback_category
+    return None
 
 
 MIME_TYPE_STORE = get_mime_type_store()
