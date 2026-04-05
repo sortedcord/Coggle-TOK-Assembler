@@ -164,13 +164,17 @@ def tag_path_tokens(query: str) -> list[TaggedToken]:
     container_flags = _container_flags([match.group(0) for match in raw_tokens])
     cwd = os.getcwd()
 
+    bare_word_flags = [
+        _is_bare_word(_strip_token(match.group(0))) for match in raw_tokens
+    ]
+    span_flags = [
+        any(span.start < match.end() and span.end > match.start() for span in spans)
+        for match in raw_tokens
+    ]
+
     for index, match in enumerate(raw_tokens):
         start, end = match.span()
-        label = (
-            TokenClass.FILEPATH
-            if any(span.start < end and span.end > start for span in spans)
-            else None
-        )
+        label = TokenClass.FILEPATH if span_flags[index] else None
         confidence = 1.0 if label is not None else None
 
         if label is None:
@@ -191,6 +195,23 @@ def tag_path_tokens(query: str) -> list[TaggedToken]:
                     if proximity is not None:
                         label = TokenClass.FILEPATH
                         confidence = proximity
+
+        if label is None and container_flags[index]:
+            prev_bare = bare_word_flags[index - 1] if index > 0 else False
+            next_bare = (
+                bare_word_flags[index + 1]
+                if index + 1 < len(bare_word_flags)
+                else False
+            )
+            prev_is_path = span_flags[index - 1] if index > 0 else False
+            next_is_path = (
+                span_flags[index + 1]
+                if index + 1 < len(span_flags)
+                else False
+            )
+            if prev_bare or next_bare or prev_is_path or next_is_path:
+                label = TokenClass.FILEPATH
+                confidence = 0.6
 
         tokens.append(
             TaggedToken(
