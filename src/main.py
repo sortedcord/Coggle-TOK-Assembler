@@ -1,84 +1,115 @@
-from enum import Enum
-
-from taggers.mime_tagger import fuzzy_match_mimetype_category
-from taggers.path_tagger import tag_path_tokens
-from taggers.time_tagger import tag_time_tokens
+from dataclasses import dataclass
 
 from enums import TokenClass
 
-
-class SpanClass(Enum):
-    TARGET = "TARGET"
-    CONSTRAINT = "CONSTRAINT"
-    DESTINATION = "DESTINATION"
-    ARGUMENT = "ARGUMENT"
+from taggers.mime_tagger import tag_mime_tokens
+from taggers.path_tagger import tag_path_tokens
+from taggers.time_tagger import tag_time_tokens
 
 
-# for filepath -> filepath preprocessor
-# for mime -> table lookup
-# number -> hard check
-# quantity -> if follows a number
-# alias -> check dictionary
-# time -> time words
-# enum -> check enum dictionary
-# grammar -> spaCY
+@dataclass
+class UnifiedToken:
+    text: str
+    token_class: TokenClass
+    confidence: float = 1.0
+
+"""
+note: TokenAssembler in this context may need a name revision.
+"""
+
+class TokenAssembler:
+    def __init__(self, query: str):
+        self.query = query
+        self.raw_tokens = query.split()
+
+    def get_unified_spans(self) -> list[UnifiedToken]:
+        """
+        runs all taggers and merges overlapping or adjacent tokens of the same class into single spans.
+        """
+        time_tags = tag_time_tokens(self.query)
+        path_tags = tag_path_tokens(self.query)
+        mime_tags = tag_mime_tokens(self.query)
+
+        # 2. Map indices to classifications
+        # We prioritize: PATH > TIME > MIME > LITERAL
+        # Other taggers:
+        ## number -> hard check
+        # quantity -> if follows a number
+        # alias -> check dictionary
+        # time -> time words
+        # enum -> check enum dictionary
+        # grammar -> spaCY
+
+        classifications: list[UnifiedToken] = []
+
+        # zip based on the word token index
+        for i in range(len(self.raw_tokens)):
+            text = self.raw_tokens[i]
+
+            if path_tags[i].label:
+                classifications.append(
+                    UnifiedToken(
+                        text, TokenClass.FILEPATH, path_tags[i].confidence or 1.0
+                    )
+                )
+            elif time_tags[i].label:
+                classifications.append(UnifiedToken(text, TokenClass.TIME))
+            elif mime_tags[i].label:
+                classifications.append(UnifiedToken(text, TokenClass.MIME))
+            else:
+                classifications.append(UnifiedToken(text, TokenClass.LITERAL))
+
+        return self._merge_adjacent(classifications)
+
+    def _merge_adjacent(self, tokens: list[UnifiedToken]) -> list[UnifiedToken]:
+        if not tokens:
+            return []
+
+        merged = []
+        current = tokens[0]
+
+        for next_token in tokens[1:]:
+            # merge if they share a class and arent Literals
+            if (
+                next_token.token_class == current.token_class
+                and current.token_class != TokenClass.LITERAL
+            ):
+                current.text += f" {next_token.text}"
+                # keep the highest confidence in the span
+                current.confidence = max(current.confidence, next_token.confidence)
+            else:
+                merged.append(current)
+                current = next_token
+
+        merged.append(current)
+        return merged
 
 
-def token_loop(span_list: list[tuple[str, TokenClass]]) -> list[tuple[str, TokenClass]]:
-    res_span_list: list[tuple[str, TokenClass]] = []
-    for token, class_ in span_list:
-        if class_ is not TokenClass.LITERAL:
-            res_span_list.append((token, TokenClass.TIME))
-            continue
+def process_query(query: str):
+    # just improving how this looks in the terminal
+    assembler = TokenAssembler(query)
+    spans = assembler.get_unified_spans()
 
-        mime_result = fuzzy_match_mimetype_category(token)
+    print(f"\nQuery: {query}")
+    print("-" * 30)
 
-        if mime_result is not None:
-            res_span_list.append((token, TokenClass.MIME))
-        else:
-            res_span_list.append((token, TokenClass.LITERAL))
-
-    return res_span_list
-
-
-# Have some ml model determine whether its the main thing or just a modifier for the main thing
-#
+    for span in spans:
+        conf_str = (
+            f" ({span.confidence:.2f})"
+            if span.token_class != TokenClass.LITERAL
+            else ""
+        )
+        print(f"[{span.token_class.value: <10}] {span.text}{conf_str}")
 
 
 def main():
-    # query = "get all video and audio files from last week and delete them"
-    query = "copy videos modified in the last 2 years and 18th january 1997 into backup folder"
+    queries = [
+        "copy videos modified in the last 2 years and 18th january 1997 into backup folder",
+        "find all python files in ~/projects/coggle created yesterday",
+    ]
 
-    # query wide preprocessors
-    #
-    tag_time_result = tag_time_tokens(query)
-    tag_path_result = tag_path_tokens(query)
-    for token in tag_path_result:
-        if token.label is not None:
-            print(f"path -> {token.text} ({token.confidence})")
-    time_phrase: str = ""
-    continue_time_phrase: bool = False
-    span_list = []
-    for token in tag_time_result:
-        if token.label is not None:
-            if continue_time_phrase:
-                time_phrase = time_phrase + " " + token.text
-            else:
-                time_phrase = token.text
-
-            continue_time_phrase = True
-        else:
-            if time_phrase != "":
-                span_list.append((time_phrase, TokenClass.TIME))
-                time_phrase = ""
-
-            span_list.append((token.text, TokenClass.LITERAL))
-            continue_time_phrase = False
-
-    span_list = token_loop(span_list)
-
-    for token in span_list:
-        print(f"{token[0]} - {token[1]}")
+    for q in queries:
+        process_query(q)
 
 
 if __name__ == "__main__":
