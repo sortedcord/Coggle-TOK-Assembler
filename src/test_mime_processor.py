@@ -1,4 +1,4 @@
-from mime_tagger import fuzzy_match_mimetype_category
+from taggers.mime_tagger import fuzzy_match_mimetype_category
 
 
 def test_fuzzy_match():

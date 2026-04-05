@@ -1,7 +1,10 @@
 from enum import Enum
 
 from taggers.mime_tagger import fuzzy_match_mimetype_category
+from taggers.path_tagger import tag_path_tokens
 from taggers.time_tagger import tag_time_tokens
+
+from enums import TokenClass
 
 
 class SpanClass(Enum):
@@ -9,19 +12,6 @@ class SpanClass(Enum):
     CONSTRAINT = "CONSTRAINT"
     DESTINATION = "DESTINATION"
     ARGUMENT = "ARGUMENT"
-
-
-class TokenClass(Enum):
-    GLOB = "GLOB"
-    FILEPATH = "FILEPATH"
-    MIME = "MIME"
-    NUMBER = "NUMBER"
-    QUANTITY = "QUANTITY"
-    ALIAS = "ALIAS"
-    TIME = "TIME"
-    ENUM = "ENUM"
-    LITERAL = "LITERAL"  # >> Fallback
-    GRAMMAR = "GRAMMAR"
 
 
 # for filepath -> filepath preprocessor
@@ -56,11 +46,16 @@ def token_loop(span_list: list[tuple[str, TokenClass]]) -> list[tuple[str, Token
 
 
 def main():
-    query = "get all video and audio files from last week and delete them"
+    # query = "get all video and audio files from last week and delete them"
+    query = "copy videos modified in the last 2 years and 18th january 1997 into backup folder"
 
     # query wide preprocessors
     #
     tag_time_result = tag_time_tokens(query)
+    tag_path_result = tag_path_tokens(query)
+    for token in tag_path_result:
+        if token.label is not None:
+            print(f"path -> {token.text} ({token.confidence})")
     time_phrase: str = ""
     continue_time_phrase: bool = False
     span_list = []
