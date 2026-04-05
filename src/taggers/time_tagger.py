@@ -196,19 +196,26 @@ def tag_time_tokens(query: str) -> list[TaggedToken]:
             if any(span.start < end and span.end > start for span in spans)
             else None
         )
+        if label is None and context_flags[index]:
+            label = TIME_LABEL
+
         if label is None:
             day_number = _extract_day_number(match.group(0))
             if day_number is not None:
                 prev_is_time = context_flags[index - 1] if index > 0 else False
                 next_is_time = (
-                    context_flags[index + 1] if index + 1 < len(context_flags) else False
+                    context_flags[index + 1]
+                    if index + 1 < len(context_flags)
+                    else False
                 )
                 if prev_is_time or next_is_time:
                     label = TIME_LABEL
             elif _extract_year_number(match.group(0)) is not None:
                 prev_is_time = context_flags[index - 1] if index > 0 else False
                 next_is_time = (
-                    context_flags[index + 1] if index + 1 < len(context_flags) else False
+                    context_flags[index + 1]
+                    if index + 1 < len(context_flags)
+                    else False
                 )
                 if prev_is_time or next_is_time:
                     label = TIME_LABEL

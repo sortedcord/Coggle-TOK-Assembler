@@ -88,4 +88,5 @@ CONTAINER_SYMBOLS = [
     "file",
     "folder",
     "directory",
+    "dir",
 ]

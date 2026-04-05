@@ -1,7 +1,5 @@
 from dataclasses import dataclass
-
 from enums import TokenClass
-
 from taggers.mime_tagger import tag_mime_tokens
 from taggers.path_tagger import tag_path_tokens
 from taggers.time_tagger import tag_time_tokens
@@ -13,9 +11,6 @@ class UnifiedToken:
     token_class: TokenClass
     confidence: float = 1.0
 
-"""
-note: TokenAssembler in this context may need a name revision.
-"""
 
 class TokenAssembler:
     def __init__(self, query: str):
@@ -24,7 +19,8 @@ class TokenAssembler:
 
     def get_unified_spans(self) -> list[UnifiedToken]:
         """
-        runs all taggers and merges overlapping or adjacent tokens of the same class into single spans.
+        Runs all taggers and merges overlapping or adjacent tokens
+        of the same class into single spans.
         """
         time_tags = tag_time_tokens(self.query)
         path_tags = tag_path_tokens(self.query)
@@ -69,7 +65,7 @@ class TokenAssembler:
         current = tokens[0]
 
         for next_token in tokens[1:]:
-            # merge if they share a class and arent Literals
+            # merge if they share a class and aren't Literals
             if (
                 next_token.token_class == current.token_class
                 and current.token_class != TokenClass.LITERAL
@@ -86,7 +82,6 @@ class TokenAssembler:
 
 
 def process_query(query: str):
-    # just improving how this looks in the terminal
     assembler = TokenAssembler(query)
     spans = assembler.get_unified_spans()
 
@@ -106,6 +101,7 @@ def main():
     queries = [
         "copy videos modified in the last 2 years and 18th january 1997 into backup folder",
         "find all python files in ~/projects/coggle created yesterday",
+        "split video.mkv into 10 minute segments as hello_1.mkv and hello_2.mkv",
     ]
 
     for q in queries:
