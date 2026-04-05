@@ -102,6 +102,7 @@ def main():
         "copy videos modified in the last 2 years and 18th january 1997 into backup folder",
         "find all python files in ~/projects/coggle created yesterday",
         "split video.mkv into 10 minute segments as hello_1.mkv and hello_2.mkv",
+        "move report2022 pdf document to reports folder",
     ]
 
     for q in queries:
@@ -110,3 +111,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

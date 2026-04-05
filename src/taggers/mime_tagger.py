@@ -5,6 +5,7 @@ import re
 
 from rapidfuzz import fuzz, process
 
+from dictionary import MIME_META_TERMS, MIME_NEIGHBOR_TOKENS
 from processors.mime_processor import (
     MimeTypeStore,
     get_mime_type_store,
@@ -85,12 +86,20 @@ def tag_mime_tokens(
 
     store = store or get_mime_type_store()
     tokens: list[TaggedToken] = []
-    for match in re.finditer(r"\S+", query):
+    raw_tokens = list(re.finditer(r"\S+", query))
+    normalized_tokens = [normalize_mime_token(match.group(0)) for match in raw_tokens]
+    meta_terms = {normalize_mime_token(term) for term in MIME_META_TERMS}
+    neighbor_terms = {normalize_mime_token(term) for term in MIME_NEIGHBOR_TOKENS}
+
+    matched_tokens: list[TaggedToken] = []
+    for match, normalized in zip(raw_tokens, normalized_tokens, strict=True):
         token = match.group(0)
         start, end = match.span()
         matched = fuzzy_match_mimetype_category(token, store, cutoff=cutoff)
+        if matched is None and normalized in meta_terms:
+            matched = normalized
         label = MIME_LABEL if matched is not None else None
-        tokens.append(
+        matched_tokens.append(
             TaggedToken(
                 text=token,
                 start=start,
@@ -99,4 +108,25 @@ def tag_mime_tokens(
                 match=matched,
             )
         )
+
+    tokens = list(matched_tokens)
+    for index, tagged in enumerate(matched_tokens):
+        if tagged.label is None:
+            continue
+        for neighbor_index in (index - 1, index + 1):
+            if neighbor_index < 0 or neighbor_index >= len(matched_tokens):
+                continue
+            neighbor = matched_tokens[neighbor_index]
+            if neighbor.label is not None:
+                continue
+            normalized_neighbor = normalized_tokens[neighbor_index]
+            if normalized_neighbor in neighbor_terms:
+                tokens[neighbor_index] = TaggedToken(
+                    text=neighbor.text,
+                    start=neighbor.start,
+                    end=neighbor.end,
+                    label=MIME_LABEL,
+                    match=neighbor.match,
+                )
+
     return tokens

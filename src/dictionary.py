@@ -90,3 +90,17 @@ CONTAINER_SYMBOLS = [
     "directory",
     "dir",
 ]
+
+MIME_META_TERMS = [
+    "media",
+    "document",
+    "documents",
+    "doc",
+    "docs",
+    "pics",
+    "vids",
+    "films",
+    "movies",
+]
+
+MIME_NEIGHBOR_TOKENS = ["file", "files"]
