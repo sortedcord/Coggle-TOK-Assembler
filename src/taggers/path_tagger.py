@@ -163,6 +163,14 @@ def tag_path_tokens(query: str) -> list[TaggedToken]:
     raw_tokens = list(re.finditer(r"\S+", query))
     container_flags = _container_flags([match.group(0) for match in raw_tokens])
     cwd = os.getcwd()
+    cwd_entries = list(os.scandir(cwd))
+    cwd_names = [entry.name for entry in cwd_entries]
+    cwd_names_lower = [name.lower() for name in cwd_names]
+    cwd_file_stems = {
+        os.path.splitext(entry.name)[0].lower()
+        for entry in cwd_entries
+        if entry.is_file()
+    }
 
     bare_word_flags = [
         _is_bare_word(_strip_token(match.group(0))) for match in raw_tokens
@@ -180,6 +188,7 @@ def tag_path_tokens(query: str) -> list[TaggedToken]:
         if label is None:
             raw_token = match.group(0)
             stripped = _strip_token(raw_token)
+            stripped_lower = stripped.lower()
             normalized = _normalize_token(stripped)
             if (
                 stripped
@@ -190,6 +199,16 @@ def tag_path_tokens(query: str) -> list[TaggedToken]:
                 if os.path.exists(candidate_path):
                     label = TokenClass.FILEPATH
                     confidence = 0.9
+                elif stripped_lower in cwd_file_stems:
+                    label = TokenClass.FILEPATH
+                    confidence = 0.85
+                elif any(
+                    name.startswith(stripped_lower)
+                    for name in cwd_names_lower
+                    if stripped_lower
+                ):
+                    label = TokenClass.FILEPATH
+                    confidence = 0.7
                 else:
                     proximity = _container_adjacent_confidence(index, container_flags)
                     if proximity is not None:
